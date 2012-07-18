@@ -4,6 +4,7 @@ import decimal
 import gridfs
 import re
 import uuid
+import hashlib
 
 from bson import Binary, DBRef, SON, ObjectId
 
@@ -33,7 +34,7 @@ __all__ = ['StringField', 'IntField', 'FloatField', 'BooleanField',
            'DecimalField', 'ComplexDateTimeField', 'URLField', 'DynamicField',
            'GenericReferenceField', 'FileField', 'BinaryField',
            'SortedListField', 'EmailField', 'GeoPointField', 'ImageField',
-           'SequenceField', 'UUIDField', 'GenericEmbeddedDocumentField']
+           'SequenceField', 'UUIDField', 'GenericEmbeddedDocumentField','PasswordField','IPAddressField']
 
 RECURSIVE_REFERENCE_CONSTANT = 'self'
 
@@ -92,8 +93,88 @@ class StringField(BaseField):
             value = re.escape(value)
             value = re.compile(regex % value, flags)
         return value
+		
+		
+class PasswordField(BaseField):
+    """A password field - generate password hexdigest
+		
+    """
+    def __init__(self, max_length=None, algorithm='sha512',min_length=None,**kwargs):
+        self.max_length = max_length
+        self.min_length = min_length
+        self.algorithm  = algorithm
+        super(PasswordField, self).__init__(**kwargs)
+
+    def password_hash(self,password,algorithm='sha512'):
+        return hashlib.new(algorithm, password).hexdigest()
+
+    def to_mongo(self,value):
+        return self.password_hash(value, self.algorithm)
+
+    def to_python(self, value):
+        return str(value)
+
+    def validate(self, value):
+        if self.max_length is not None and len(value) > self.max_length:
+            self.error('Password is too long')
+
+        if self.min_length is not None and len(value) < self.min_length:
+            self.error('Password value is too short')
 
 
+class IPAddressField(BaseField):
+    """
+        An IP address field
+        
+    """
+    
+    IPV6_REGEXP = re.compile(r"""
+            ^
+            \s*                         # Leading whitespace
+            (?!.*::.*::)                # Only a single whildcard allowed
+            (?:(?!:)|:(?=:))            # Colon iff it would be part of a wildcard
+            (?:                         # Repeat 6 times:
+                [0-9a-f]{0,4}           #   A group of at most four hexadecimal digits
+                (?:(?<=::)|(?<!::):)    #   Colon unless preceeded by wildcard
+            ){6}                        #
+            (?:                         # Either
+                [0-9a-f]{0,4}           #   Another group
+                (?:(?<=::)|(?<!::):)    #   Colon unless preceeded by wildcard
+                [0-9a-f]{0,4}           #   Last group
+                (?: (?<=::)             #   Colon iff preceeded by exacly one colon
+                 |  (?<!:)              #
+                 |  (?<=:) (?<!::) :    #
+                 )                      # OR
+             |                          #   A v4 address with NO leading zeros 
+                (?:25[0-4]|2[0-4]\d|1\d\d|[1-9]?\d)
+                (?: \.
+                    (?:25[0-4]|2[0-4]\d|1\d\d|[1-9]?\d)
+                ){3}
+            )
+            \s*                         # Trailing whitespace
+            $
+        """, re.VERBOSE | re.IGNORECASE | re.DOTALL)
+    
+    def validate_ipv4_address(self,address):
+        addr_parts = address.split(".")
+        if len(addr_parts) != 4:
+            return False
+        for part in addr_parts:
+            try:
+                if not 0 <= int(part) <= 255:
+                    return False
+            except ValueError:
+                return False
+        return True
+    
+    def validate_ipv6_address(self,address):
+        return IPAddressField.IPV6_REGEXP.match(address) is not None
+
+    def validate(self,value):
+        addr_is_valid = self.validate_ipv4_address(value) or self.validate_ipv6_address(value)
+        if not addr_is_valid:
+            self.error('Invalid IP Address: %s' % value)
+			 
 class URLField(StringField):
     """A field that validates input as an URL.
 
