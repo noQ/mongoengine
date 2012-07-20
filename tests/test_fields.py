@@ -170,6 +170,52 @@ class FieldTest(unittest.TestCase):
         person.name = 'Shorter name'
         person.validate()
 
+    def test_ip_validation(self):
+        """Ensure that IPAddressField is valid.
+        """
+        
+        class Host(Document):
+            ip  = IPAddressField()
+        
+        host = Host()
+        host.ip = "192.168.190.10"
+        host.validate()
+        host.save()
+        
+        
+        host.ip = "::1"
+        host.validate()
+        host.save()
+
+        host.ip = "fe80::1177:db4a:18e:bda8%20"
+        self.assertRaises(ValidationError, host.validate)
+
+    def test_password_validation(self):
+        """Ensure that PasswordField is valid.
+        """        
+
+        class Users(Document):
+            username  = StringField()
+            password  = PasswordField(algorithm="sha1",validator='[a-z]+')
+        
+        import random
+        user = Users()
+        user.username=str(random.random())
+        user.password="abracadabra"
+
+        user.validate()
+        user.save()
+
+        class Users(Document):
+            username  = StringField()
+            password  = PasswordField(algorithm="md5")
+        
+        user = Users()
+        user.username=str(random.random())
+        user.password="pymongoengine2012"
+        user.validate()
+        user.save()
+		
     def test_url_validation(self):
         """Ensure that URLFields validate urls properly.
         """
