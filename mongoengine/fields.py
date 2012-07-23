@@ -199,14 +199,9 @@ class PasswordField(BaseField):
 
     def to_python(self, value):
         '''
-            Return password 
-                {
-                    'hash': u'c2e920e469d14f240d4de02883489750a1a63e68',
-                    'salt': u'QBX6FZD', 
-                    'algorithm': u'sha1'
-                }
+            Return password like sha1$DEnDMSj$ef5cd35779bba65528c900d248f3e939fb495c65
         '''
-        return self.to_dict(value)
+        return value
 
     def to_dict(self,value):
         (algorithm,salt,hash) = value.split(PasswordField.DOLLAR)
