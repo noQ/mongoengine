@@ -156,7 +156,7 @@ class PasswordField(BaseField):
     def random_password(self,nchars=7):
         chars   = PasswordField.CHARS
         hash    = ''
-        for char in range(nchars):
+        for char in xrange(nchars):
             rand_char = random.randrange(0,len(chars))
             hash += chars[rand_char]
         return hash
