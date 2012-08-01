@@ -79,6 +79,5 @@ class PasswordHandler:
             return False
         result = 0
         for x, y in zip(value1, value2):
-            print x,y
             result |= ord(x) ^ ord(y)
         return result == 0
