@@ -69,3 +69,5 @@ Fields
 .. autoclass:: mongoengine.BinaryField
 .. autoclass:: mongoengine.GeoPointField
 .. autoclass:: mongoengine.SequenceField
+.. autoclass:: mongoengine.PasswordField
+.. autoclass:: mongoengine.IPAddressField

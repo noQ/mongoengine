@@ -84,6 +84,8 @@ are as follows:
 * :class:`~mongoengine.BinaryField`
 * :class:`~mongoengine.GeoPointField`
 * :class:`~mongoengine.SequenceField`
+* :class:`~mongoengine.PasswordField`
+* :class:`~mongoengine.IPAddressField`
 
 Field arguments
 ---------------
